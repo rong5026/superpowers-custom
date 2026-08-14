@@ -15,7 +15,7 @@ task with a risk-scaled review, and running one whole-branch review at the end.
   Most tasks were 3–11 min mechanical edits paying a full review each.
 - **Hard model defaults** — implementers default to the cheapest tier in the
   template, not "choose per policy" prose that silently inherited the top tier.
-- **2-round fix cap** (was 5) — a task needing 3+ rounds is a plan defect;
+- **3-round fix cap** (was 5) — a task needing more is a plan defect;
   escalate, don't grind.
 - **Debugger dispatch, never controller inline** — infra/base failures go to a
   systematic-debugging subagent. Controller doing Docker/integration runs inline
@@ -61,12 +61,16 @@ Set `model:` on **every** dispatch. Omitting it inherits the session model
 | Role | Default | Escalate to |
 |------|---------|-------------|
 | Implementer, risk=low | cheapest tier (haiku) | — |
-| Implementer, risk=high | mid tier (sonnet) | most-capable at fix round 2 |
+| Implementer, risk=high — integration / judgment | mid tier (sonnet) | most-capable at fix round 3 |
+| Implementer, risk=high — money / security / auth / data-migration surface | most-capable | — |
 | Task reviewer (only runs for risk=high) | mid tier (sonnet) | — |
 | Debugger subagent | mid tier (sonnet) | most-capable if stuck |
 | Final whole-branch review | most-capable | — |
 
-Implementers never run on the most-capable tier except a round-2 fix escalation.
+Sonnet is enough for ordinary multi-file integration. The money / security /
+auth / data-migration subset starts on the most-capable tier — a subtle bug
+there is expensive and these tasks are rare, so the cost is bounded.
+Implementers otherwise run on the top tier only at a round-3 fix escalation.
 
 ## The Task Loop
 
@@ -122,19 +126,20 @@ Record the tag in the dispatch and the ledger.
 - A `⚠️ Cannot verify from diff` item: you resolve it yourself (you hold cross-
   task context); a confirmed gap enters the fix loop.
 
-### 5. Fix loop — 2-round cap (C)
+### 5. Fix loop — 3-round cap (C)
 
 Triggers on spec ❌, any Critical/Important finding, or a confirmed ⚠️ gap.
 Minor findings never enter the loop — log `Task N: minor (deferred): …` for the
 final review. A plan-mandated / plan-conflicting finding is the human's call.
 
-- **Round 1:** resume the original implementer with findings verbatim.
-- **Round 2:** fresh implementer, one model tier up, given brief + report +
+- **Rounds 1–2:** resume the original implementer with findings verbatim — its
+  context is intact (it knows the task, the code, its own choices).
+- **Round 3:** fresh implementer, one model tier up, given brief + report +
   findings + "a prior implementer attempted this N times; read the report."
 - Each round: implementer fixes, re-runs covering tests, appends fix report.
   Then one scoped re-review (`review-package PLAN_FILE FIX_BASE HEAD`,
   [re-review-prompt.md](re-review-prompt.md)).
-- **Cap at round 2.** Still open → adjudicate each finding: contestable or
+- **Cap at round 3.** Still open → adjudicate each finding: contestable or
   real-but-not-load-bearing → park with a ruling in the ledger; real AND
   load-bearing (a later task builds on it, or it's a plan defect) → STOP,
   `Task N: BLOCKED — …`, report to human. Never fix findings in the controller.
