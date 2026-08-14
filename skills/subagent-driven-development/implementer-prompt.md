@@ -21,6 +21,16 @@ Subagent (general-purpose):
     Unclear on requirements, approach, dependencies, or anything in the brief?
     Ask now. Don't guess.
 
+    ## Laziest thing that works (ponytail)
+    Before writing code, climb and stop at the first rung that holds:
+    1. Does this need to exist at all? Speculative → skip it, say so.
+    2. Already in this codebase (helper, util, type, pattern)? Reuse it.
+    3. Stdlib or native platform feature does it? Use it.
+    4. One line before fifty.
+    No unrequested abstractions, no scaffolding "for later". The shortest diff
+    that satisfies the brief and passes its tests wins. Never simplify away
+    input validation, error handling, security, or anything the brief requires.
+
     ## Your job
     1. Implement exactly what the brief specifies — nothing more (YAGNI).
     2. TDD if the task says so: write the failing test, watch it fail (RED),
