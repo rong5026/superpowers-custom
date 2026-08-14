@@ -117,8 +117,11 @@ Record the tag in the dispatch and the ledger.
 - **risk=low:** the implementer's self-review + TDD RED/GREEN evidence in the
   report IS the gate. Controller reads only the ≤6-line return + spec bullets;
   confirm every spec requirement is checked off. No separate reviewer dispatch.
-  If the return reveals a spec gap or missing test evidence, escalate this task
-  to high and run the full reviewer.
+  **Both verdicts still required, as a controller checklist:** every spec bullet
+  checked AND TDD RED/GREEN evidence present AND the self-review's quality items
+  (YAGNI, naming, tests verify behavior not mocks) all passed. If any of the
+  three is missing or unconvincing, escalate this task to high and run the full
+  reviewer.
 - **risk=high:** `scripts/review-package PLAN_FILE BASE HEAD` → diff file.
   Dispatch [task-reviewer-prompt.md](task-reviewer-prompt.md) with brief path,
   report path, diff path, and the verbatim Global Constraints that bind this
