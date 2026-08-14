@@ -1,7 +1,0 @@
-{
-  "name": "superpowers",
-  "version": "6.2.0-custom-v2",
-  "description": "Superpowers (custom v2) — planning, risk-tiered SDD, TDD, debugging, delivery workflows.",
-  "license": "MIT",
-  "skills": "./skills/"
-}

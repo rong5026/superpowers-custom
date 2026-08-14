@@ -57,40 +57,28 @@ dispatch 개수**에서 샜다:
 스킬은 **런타임 중립**이라 Claude·Codex가 같은 파일을 그대로 읽는다(변환 없음).
 install.sh가 `skills/`·`hooks/`를 대상 repo의 `.claude/`와 `.codex/`에 배치한다.
 
-설치 후 자동 트리거를 켜려면 SessionStart bootstrap 훅을 등록한다:
-- **Claude**: `settings.hooks.json`의 `SessionStart` 엔트리를 대상 `.claude/settings.json`에 머지.
-- **Codex**: 같은 SessionStart 훅을 Codex 훅 설정에 등록. `hooks/session-start`는 Codex 출력 포맷(top-level `additionalContext`)을 이미 지원한다. 등록 안 해도 스킬은 이름으로 **수동 호출** 가능.
+- **Claude**: `settings.hooks.json`의 `SessionStart` 엔트리를 대상 `.claude/settings.json`에 머지 → using-superpowers bootstrap 주입 → 자동 트리거.
 
-## Codex 지원
+## Codex 지원 (실측 검증됨)
 
-두 가지 경로. **bootstrap 자동 트리거까지 되는 건 플러그인 경로**다.
+**repo-owned `.codex/skills/` 경로를 쓴다.** `install.sh`가 배치한다. 실제
+codex CLI(0.147.0)로 검증한 결과:
+- Codex가 프로젝트 `.codex/skills/`를 자동 로드하고 using-superpowers 내용을 세션
+  지침으로 활성화한다 (bootstrap **주입됨**).
+- 스킬 이름은 **bare** (`subagent-driven-development`, `brainstorming`) — Claude와 일치.
+- 캐노니컬 acceptance 테스트 통과: `"Let's make a react todo list"` 입력 시
+  **brainstorming 스킬이 코드 작성 전에 자동 트리거**됨.
 
-### 경로 1 — Codex 플러그인 (권장, upstream과 동일 방식)
+### Codex 플러그인으로는 설치하지 말 것
 
-이 repo에 `.codex-plugin/plugin.json`이 있고 `hooks` 필드를 **생략**했다. Codex는
-매니페스트에 `hooks`가 없으면 `hooks/hooks.json`(= Claude와 동일한 SessionStart
-bootstrap 훅)을 **자동 발견·등록**한다. 즉 Codex 플러그인으로 설치하면 스킬 +
-using-superpowers bootstrap이 같이 붙어 자동 트리거가 된다 — upstream이 Codex를
-붙이는 바로 그 메커니즘. (upstream은 마켓플레이스 배포판에서 `hooks:{}`로 이걸
-일부러 끈다.)
+`codex plugin add`(마켓플레이스 플러그인) 경로는 이 포크에서 **깨진다**:
+- Codex 플러그인은 스킬을 `superpowers:` 로 **네임스페이스**한다 → 이 포크의 bare
+  상호참조가 안 풀려 체이닝이 깨진다.
+- 플러그인 훅 `hooks/hooks.json`이 `${CLAUDE_PLUGIN_ROOT}`(Claude 전용 env)를 참조 →
+  Codex에선 비어서 bootstrap 훅이 실행돼도 스크립트를 못 찾는다.
 
-Codex 플러그인으로 이 repo를 추가하면 된다(Codex 마켓플레이스/로컬 플러그인 경로는
-Codex 버전 문서 참조).
-
-### 경로 2 — repo-owned (`.codex/skills/`)
-
-`install.sh`가 `.codex/skills/`에 스킬을 복사한다. 스킬은 이름으로 **수동 호출**
-가능하지만, 플러그인이 아니라 `hooks/hooks.json` 자동 발견이 안 걸리므로 bootstrap
-자동 트리거는 보장되지 않는다(= upstream 기준 "dead weight" 위험). 자동 트리거가
-필요하면 경로 1을 쓴다.
-
-### 공통
-
-- 스킬은 harness 중립 = 변환 없이 같은 파일.
-- **네임스페이스 검증**: 이 포크는 상호참조를 bare 이름으로 strip했다. Codex 플러그인이
-  스킬을 `superpowers:` 로 네임스페이스하면 bare 참조가 안 풀릴 수 있다. 첫 Codex
-  세션에서 `brainstorming`/`subagent-driven-development` 체이닝이 실제로 트리거되는지
-  확인하고, 안 되면 참조에 `superpowers:` 를 복원한다.
+repo-owned 경로는 이 두 문제를 다 피한다. 그래서 Codex는 플러그인이 아니라
+`.codex/skills/`로 쓴다.
 
 ## 검증 (트리거 실제로 붙는지)
 
