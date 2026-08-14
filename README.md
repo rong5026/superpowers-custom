@@ -49,12 +49,25 @@ dispatch 개수**에서 샜다:
 ## 설치 (대상 repo에)
 
 ```bash
-TARGET=/path/to/your-repo
-cp -R skills "$TARGET/.claude/skills"          # 같은 이름 스킬 덮어씀
-cp -R hooks  "$TARGET/.claude/hooks"
-chmod +x "$TARGET/.claude/hooks/run-hook.cmd" "$TARGET/.claude/hooks/session-start"
-# settings.hooks.json 의 SessionStart 엔트리를 TARGET/.claude/settings.json 에 머지
+./install.sh /path/to/your-repo          # Claude + Codex 둘 다
+./install.sh /path/to/your-repo --claude-only
+./install.sh /path/to/your-repo --codex-only
 ```
+
+스킬은 **런타임 중립**이라 Claude·Codex가 같은 파일을 그대로 읽는다(변환 없음).
+install.sh가 `skills/`·`hooks/`를 대상 repo의 `.claude/`와 `.codex/`에 배치한다.
+
+설치 후 자동 트리거를 켜려면 SessionStart bootstrap 훅을 등록한다:
+- **Claude**: `settings.hooks.json`의 `SessionStart` 엔트리를 대상 `.claude/settings.json`에 머지.
+- **Codex**: 같은 SessionStart 훅을 Codex 훅 설정에 등록. `hooks/session-start`는 Codex 출력 포맷(top-level `additionalContext`)을 이미 지원한다. 등록 안 해도 스킬은 이름으로 **수동 호출** 가능.
+
+## Codex 지원
+
+superpowers 스킬은 harness 중립이라 Codex에서도 그대로 동작한다.
+- 스킬 경로: 대상 repo의 `.codex/skills/<skill>/` (install.sh가 배치).
+- 상호참조는 bare 이름(`subagent-driven-development` 등)이라 Claude·Codex 공통.
+- `hooks/session-start`가 Codex/Copilot 출력 포맷을 분기 처리하므로 bootstrap 훅 스크립트는 그대로 재사용.
+- 한계: Codex의 SessionStart 훅 자동등록 방식은 Codex 버전마다 달라 install.sh가 자동 배선하지 않는다. 미등록 시 자동 트리거는 약하고, 스킬은 수동 호출로 쓴다.
 
 ## 검증 (트리거 실제로 붙는지)
 
