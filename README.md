@@ -63,11 +63,34 @@ install.sh가 `skills/`·`hooks/`를 대상 repo의 `.claude/`와 `.codex/`에 �
 
 ## Codex 지원
 
-superpowers 스킬은 harness 중립이라 Codex에서도 그대로 동작한다.
-- 스킬 경로: 대상 repo의 `.codex/skills/<skill>/` (install.sh가 배치).
-- 상호참조는 bare 이름(`subagent-driven-development` 등)이라 Claude·Codex 공통.
-- `hooks/session-start`가 Codex/Copilot 출력 포맷을 분기 처리하므로 bootstrap 훅 스크립트는 그대로 재사용.
-- 한계: Codex의 SessionStart 훅 자동등록 방식은 Codex 버전마다 달라 install.sh가 자동 배선하지 않는다. 미등록 시 자동 트리거는 약하고, 스킬은 수동 호출로 쓴다.
+두 가지 경로. **bootstrap 자동 트리거까지 되는 건 플러그인 경로**다.
+
+### 경로 1 — Codex 플러그인 (권장, upstream과 동일 방식)
+
+이 repo에 `.codex-plugin/plugin.json`이 있고 `hooks` 필드를 **생략**했다. Codex는
+매니페스트에 `hooks`가 없으면 `hooks/hooks.json`(= Claude와 동일한 SessionStart
+bootstrap 훅)을 **자동 발견·등록**한다. 즉 Codex 플러그인으로 설치하면 스킬 +
+using-superpowers bootstrap이 같이 붙어 자동 트리거가 된다 — upstream이 Codex를
+붙이는 바로 그 메커니즘. (upstream은 마켓플레이스 배포판에서 `hooks:{}`로 이걸
+일부러 끈다.)
+
+Codex 플러그인으로 이 repo를 추가하면 된다(Codex 마켓플레이스/로컬 플러그인 경로는
+Codex 버전 문서 참조).
+
+### 경로 2 — repo-owned (`.codex/skills/`)
+
+`install.sh`가 `.codex/skills/`에 스킬을 복사한다. 스킬은 이름으로 **수동 호출**
+가능하지만, 플러그인이 아니라 `hooks/hooks.json` 자동 발견이 안 걸리므로 bootstrap
+자동 트리거는 보장되지 않는다(= upstream 기준 "dead weight" 위험). 자동 트리거가
+필요하면 경로 1을 쓴다.
+
+### 공통
+
+- 스킬은 harness 중립 = 변환 없이 같은 파일.
+- **네임스페이스 검증**: 이 포크는 상호참조를 bare 이름으로 strip했다. Codex 플러그인이
+  스킬을 `superpowers:` 로 네임스페이스하면 bare 참조가 안 풀릴 수 있다. 첫 Codex
+  세션에서 `brainstorming`/`subagent-driven-development` 체이닝이 실제로 트리거되는지
+  확인하고, 안 되면 참조에 `superpowers:` 를 복원한다.
 
 ## 검증 (트리거 실제로 붙는지)
 
