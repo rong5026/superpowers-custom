@@ -28,7 +28,7 @@ dispatch 개수**에서 샜다:
 |---|---|---|---|
 | A | **risk-tier 리뷰** — `low` 태스크는 별도 리뷰어 dispatch 생략, implementer self-review+TDD 증거로 게이트 | `subagent-driven-development/SKILL.md` | |
 | B | **모델 하드 기본값** — low→haiku, high→sonnet, 최종 리뷰만 최상위. 템플릿에 박아 "상속" 방지 | `SKILL.md` §Model + `implementer-prompt.md` | |
-| C | **fix 루프 5→2 라운드** — 3라운드 필요 = 계획 결함, 갈지 말고 에스컬레이트 | `SKILL.md` §Fix loop | |
+| C | **fix 루프 5→3 라운드** — 3라운드로 안 끝나면 = 계획 결함, 갈지 말고 에스컬레이트 | `SKILL.md` §Fix loop | |
 | D | **디버거 dispatch** — 인프라/base 결함은 systematic-debugging 서브에이전트로. 컨트롤러 인라인 삽질 금지 | `SKILL.md` §Handle report | |
 | E | **base health pre-flight** — 루프 시작 전 compile+smoke 1회. 선행 결함 앞에서 한 번에 잡음 | `SKILL.md` §Setup | |
 | F | **태스크 크기 상한** — ~5파일 / ~15분 초과 시 분할 강제 | `writing-plans/SKILL.md` | |

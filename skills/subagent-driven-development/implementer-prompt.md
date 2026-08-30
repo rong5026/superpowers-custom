@@ -4,7 +4,7 @@
 Subagent (general-purpose):
   description: "Implement Task N: [task name]"
   model: [B — SET EXPLICITLY. risk=low → haiku. risk=high → sonnet.
-          fix round 2 → one tier up. NEVER omit (omitting inherits the
+          fix round 3 → one tier up. NEVER omit (omitting inherits the
           session's most expensive model).]
   prompt: |
     You are implementing Task N: [task name]  (risk: [low|high])
