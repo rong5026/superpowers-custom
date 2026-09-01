@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "superpowers-custom",
+  "description": "Private marketplace for superpowers-v2, a slim fork of superpowers tuned for faster subagent-driven development",
+  "owner": {
+    "name": "rong5026",
+    "url": "https://github.com/rong5026"
+  },
+  "plugins": [
+    {
+      "name": "superpowers-v2",
+      "description": "Slim superpowers fork: risk-tiered review, hard model defaults, 3-round fix cap, base pre-flight",
+      "source": "./",
+      "category": "workflow"
+    }
+  ]
+}

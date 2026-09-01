@@ -65,7 +65,26 @@ v6.2.0 → v6.3.0 변경분을 커스텀(A~F) 위에 얹었다. 커스텀 3파�
 그 외 스킬 문서는 `superpowers:` 네임스페이스만 bare로 정리(내용 동일).
 프로젝트 스킬은 bare 이름으로 호출되므로 상호참조가 이 이름과 일치해야 한다.
 
-## 설치 (대상 repo에)
+## 설치 A — 플러그인 (Claude Code, 권장)
+
+이 repo 자체가 마켓플레이스다. 어느 공개 마켓 목록에도 안 올라가니 URL을 아는
+사람만 쓴다.
+
+```bash
+claude plugin marketplace add rong5026/superpowers-custom
+claude plugin install superpowers-v2@superpowers-custom
+```
+
+업데이트는 `claude plugin marketplace update superpowers-custom` 후 재설치.
+
+플러그인 경로는 `hooks/hooks.json`이 `${CLAUDE_PLUGIN_ROOT}` 기준이라
+**SessionStart bootstrap 훅이 자동으로 붙는다** — 아래 install.sh 경로에서
+직접 해야 했던 `settings.json` 머지가 필요 없다.
+
+주의: 기존 `superpowers` 플러그인이 깔려 있으면 스킬 14개가 이중 로드된다.
+같은 프로젝트에서 둘 다 켜지 말 것.
+
+## 설치 B — repo-owned (Codex, 또는 팀원이 clone만 하면 붙게)
 
 ```bash
 ./install.sh /path/to/your-repo          # Claude + Codex 둘 다

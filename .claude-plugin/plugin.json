@@ -1,0 +1,13 @@
+{
+  "name": "superpowers-v2",
+  "description": "Slim fork of superpowers v6.3.0: risk-tiered SDD review, hard model defaults, 3-round fix cap, debugger dispatch, base pre-flight, task size cap",
+  "version": "2.0.0",
+  "author": {
+    "name": "rong5026",
+    "email": "evan@softsquared.com"
+  },
+  "homepage": "https://github.com/rong5026/superpowers-custom",
+  "repository": "https://github.com/rong5026/superpowers-custom",
+  "license": "MIT",
+  "keywords": ["skills", "tdd", "debugging", "subagent-driven-development", "workflows"]
+}
