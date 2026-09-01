@@ -10,13 +10,16 @@ task with a risk-scaled review, and running one whole-branch review at the end.
 
 **Announce:** "I'm using subagent-driven-development to execute this plan."
 
+**Upstream base: v6.3.0.** Its rulings-not-stalls model, task batching,
+bounded waits and no-subagents contract are carried in below.
+
 **v2 vs upstream — what changed and why (measured on real sessions):**
 - **Risk-tiered review** — low-risk tasks skip the separate reviewer dispatch.
   Most tasks were 3–11 min mechanical edits paying a full review each.
 - **Hard model defaults** — implementers default to the cheapest tier in the
   template, not "choose per policy" prose that silently inherited the top tier.
-- **3-round fix cap** (was 5) — a task needing more is a plan defect;
-  escalate, don't grind.
+- **3-round fix cap** (was 5) — a task needing more is a plan defect; rule on
+  it and carry the ruling forward, don't grind.
 - **Debugger dispatch, never controller inline** — infra/base failures go to a
   systematic-debugging subagent. Controller doing Docker/integration runs inline
   was the largest invisible time sink.
@@ -29,8 +32,22 @@ task with a risk-scaled review, and running one whole-branch review at the end.
 returns, stays resident in controller context for the whole session and is
 re-read every turn. Hand artifacts over as **files**. Subagents return ≤6 lines.
 
-**Continuous execution:** do not check in between tasks. Stop only on
-unresolvable BLOCKED, genuine ambiguity, or all-tasks-done.
+**Continuous execution:** do not check in between tasks, and do not stop to
+ask a question the ledger can answer.
+
+**Rulings, not stalls (6.3.0).** A running plan does not wait on a human.
+Conflicts, ambiguities, plan defects, a cap you would have asked to exceed —
+decide them. The spec is the binding authority, the plan is its argument, and
+your judgment settles what neither answers. Record every decision as
+`Ruling: <what you decided> — <why> — <what it costs if wrong>` and keep going.
+A wrong ruling costs rework the human can see and undo; a session parked on a
+question costs their whole day and buys nothing.
+
+**Only these stop you:** an irreversible or destructive operation; a
+security-sensitive action; a side effect outside this worktree that norms say
+you ask about first (a merge, a push to a shared branch, a publish); a plan so
+broken that every path forward is a guess; and — v2 only — a base that fails
+pre-flight health, since that breakage is not this plan's to rule on.
 
 ## Setup
 
@@ -43,9 +60,19 @@ unresolvable BLOCKED, genuine ambiguity, or all-tasks-done.
    `<workspace>/progress.md`: tasks with a `complete` line are DONE — resume at
    the first without one. Trust the ledger + `git log` over memory after any
    compaction. Create the ledger first line: `# SDD ledger — plan: <path>`.
-4. Read the plan ONCE. Note Global Constraints. One todo per task.
-5. **Pre-flight scan (plan):** batch any task↔task or task↔constraint conflicts
-   to the human as one question before Task 1. Clean → proceed silently.
+4. Read the plan ONCE. Note Global Constraints. One todo per task. If the plan
+   names a **Spec**, read it too — it is the authority the plan argues from, and
+   in-plan conflicts resolve against it. No reachable spec → ledger that fact;
+   rulings made without one are provisional.
+5. **Pre-flight scan (plan) — the output is a table, not a verdict (6.3.0).**
+   One row per task pair sharing a file or interface (what one produces vs what
+   the other consumes, what you found), plus one row per task for self-agreement
+   (the tests it specifies vs the code it specifies, files it creates vs files it
+   later touches). "Clean" without those rows is not a scan you ran. Write the
+   table to the ledger, **rule on every conflict before Task 1** and record the
+   ruling beside its row, then dispatch. Clean → proceed without comment. The
+   review loop remains the net for conflicts that only emerge from
+   implementation.
 6. **Pre-flight health (base) — E.** Before Task 1, on the base commit run the
    project's compile + fast integration smoke (the plan's Global Constraints
    name the commands; if absent, ask once). If the base is already broken
@@ -76,6 +103,20 @@ Implementers otherwise run on the top tier only at a round-3 fix escalation.
 
 Record `BASE = git rev-parse HEAD` before each dispatch (review packages need it).
 
+**Batch small same-shape work (6.3.0).** When the plan lists several tasks that
+are each a small, independent edit of the same kind — the same one-line fix,
+constant change, or field addition repeated across files — compose ONE brief
+listing every file and its change, send the batch to a single subagent, review
+its diff as one unit. One-dispatch-per-task is for work that needs its own
+judgment, tests, or review surface.
+
+**Waiting on subagents (6.3.0).** Never poll a wait interface with short
+timeouts, and never sit in one silent open-ended wait either. While you have
+local work — ledger updates, packaging the next review, reading reports — keep
+working. Genuinely idle → wait in bounded 5–10 minute stretches; between
+stretches post one status line and reconcile live children: list them, chase any
+that finished without reporting.
+
 ### 1. Risk-tag the task (A)
 
 Tag from the plan text, before dispatching:
@@ -97,6 +138,12 @@ Record the tag in the dispatch and the ledger.
   ambiguity; the report-file path (`…/task-N-report.md`); the model per the table.
 - Never paste prior-task history or accumulated summaries. Never dispatch two
   implementers in parallel.
+- **No-subagents contract (6.3.0)** — the template binds the implementer to
+  dispatch nothing: no helpers, and above all no reviewer. Review comes from you,
+  after the report. Every worker-spawned reviewer measured upstream was a
+  duplicate seat on the same diff.
+- If an earlier task parked a finding in the area this task touches, carry a
+  pointer to that ledger entry in the dispatch.
 - Record the implementer's agent id — fix round 1 resumes it.
 
 ### 3. Handle the report
@@ -110,7 +157,9 @@ Record the tag in the dispatch and the ledger.
   a systematic-debugging subagent to root-cause it — do NOT run Docker /
   integration suites / root-cause hunts inline in the controller.** If the
   blocker is task-sizing → split. If reasoning → escalate model. If the plan is
-  wrong → escalate to human. Never retry the same model unchanged.
+  wrong → **rule on the correction, ledger it, and re-dispatch with the ruling
+  carried in the brief** (6.3.0 — do not park the run on a question). Never
+  retry the same model unchanged.
 
 ### 4. Review — risk-scaled (A)
 
@@ -133,7 +182,11 @@ Record the tag in the dispatch and the ledger.
 
 Triggers on spec ❌, any Critical/Important finding, or a confirmed ⚠️ gap.
 Minor findings never enter the loop — log `Task N: minor (deferred): …` for the
-final review. A plan-mandated / plan-conflicting finding is the human's call.
+final review. A plan-mandated / plan-conflicting finding is **yours to rule on**
+(6.3.0): weigh the finding against the plan text, decide with the spec as binding
+authority, ledger the `Ruling:` before acting on it. Do not dismiss the finding
+because the plan mandates it, and do not dispatch a contradicting fix without a
+recorded ruling.
 
 - **Rounds 1–2:** resume the original implementer with findings verbatim — its
   context is intact (it knows the task, the code, its own choices).
@@ -143,9 +196,12 @@ final review. A plan-mandated / plan-conflicting finding is the human's call.
   Then one scoped re-review (`review-package PLAN_FILE FIX_BASE HEAD`,
   [re-review-prompt.md](re-review-prompt.md)).
 - **Cap at round 3.** Still open → adjudicate each finding: contestable or
-  real-but-not-load-bearing → park with a ruling in the ledger; real AND
-  load-bearing (a later task builds on it, or it's a plan defect) → STOP,
-  `Task N: BLOCKED — …`, report to human. Never fix findings in the controller.
+  real-but-not-load-bearing → park as `Task N: parked — <finding> — Ruling: …`;
+  real AND load-bearing (a later task builds on it, or it's a plan defect) →
+  **rule on the smallest change that unblocks the dependent work**, ledger
+  `Task N: Ruling: <finding> — <what you decided and why>`, and carry it into the
+  next task's dispatch (6.3.0 — was STOP/BLOCKED). Stop only when every path
+  forward is a guess. Never fix findings in the controller.
 
 ### 6. Complete
 
@@ -160,9 +216,17 @@ main HEAD`). Dispatch requesting-code-review's
 [code-reviewer.md](../requesting-code-review/code-reviewer.md) on the
 most-capable model, pointed at the ledger's deferred-minor + parked lines.
 Findings → ONE fix subagent with the full list (not one-per-finding) → exactly
-one scoped re-review → adjudicate residuals as in the loop. No second fix wave.
+one scoped re-review → adjudicate residuals as in the loop (rule and ledger;
+only the stop-list above halts you). No second fix wave.
 
 ## Finish
+
+**Before deleting anything (6.3.0):** collect every ledger line containing
+`Ruling:` — pre-flight rulings, parked findings, breaker adjudications — into
+your final message under "Rulings I made", in the order you made them, each with
+what it costs if wrong. The list is exhaustive. It is the only place decisions
+you took on your human partner's behalf reach them. A ruling that dies with the
+workspace was made in secret.
 
 Clean final review → `rm -rf <workspace>` (git is the record). Leave sibling
 plan directories alone. Use finishing-a-development-branch.

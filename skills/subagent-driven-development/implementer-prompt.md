@@ -34,6 +34,14 @@ Subagent (general-purpose):
 
     Work from: [directory]
 
+    ## You dispatch nothing
+    Do all of this task's work yourself. Never spawn a subagent — not a
+    helper, and above all not a reviewer. Self-review below means reading
+    your own diff. Gating is the controller's job and is already scheduled.
+    A reviewer you spawn is a duplicate seat on the same diff at full cost,
+    and its approval counts for nothing. If you catch yourself thinking "an
+    independent review would strengthen my report" — report instead.
+
     ## Escalate — it's always OK to stop
     Report BLOCKED or NEEDS_CONTEXT (specifics in the final message) when the
     task needs architectural decisions with multiple valid approaches, needs

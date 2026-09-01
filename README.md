@@ -1,6 +1,6 @@
 # superpowers-custom
 
-[superpowers](https://github.com/obra/superpowers) v6.2.0 기반의 슬림 커스텀.
+[superpowers](https://github.com/obra/superpowers) **v6.3.0** 기반의 슬림 커스텀.
 구현 단계(subagent-driven-development)가 너무 느려서, 실제 세션을 분석해 병목 6개를
 겨냥해 다시 튜닝한 포크다.
 
@@ -18,7 +18,7 @@ dispatch 개수**에서 샜다:
 3. 컨트롤러가 인프라/DB를 **직접** 붙잡고 삽질 (서브에이전트로 안 넘김)
 4. base 브랜치의 선행 결함을 태스크마다 재발견
 5. 모델 미지정 → 세션 최상위 모델(비쌈) 상속
-6. 컨트롤러 SKILL.md가 503줄 → 매턴 재독 = 비용
+6. 컨트롤러 SKILL.md가 503줄(v6.2.0 기준) → 매턴 재독 = 비용
 
 ## upstream 대비 변경
 
@@ -28,22 +28,41 @@ dispatch 개수**에서 샜다:
 |---|---|---|---|
 | A | **risk-tier 리뷰** — `low` 태스크는 별도 리뷰어 dispatch 생략, implementer self-review+TDD 증거로 게이트 | `subagent-driven-development/SKILL.md` | |
 | B | **모델 하드 기본값** — low→haiku, high→sonnet, 최종 리뷰만 최상위. 템플릿에 박아 "상속" 방지 | `SKILL.md` §Model + `implementer-prompt.md` | |
-| C | **fix 루프 5→3 라운드** — 3라운드로 안 끝나면 = 계획 결함, 갈지 말고 에스컬레이트 | `SKILL.md` §Fix loop | |
+| C | **fix 루프 5→3 라운드** — 3라운드로 안 끝나면 = 계획 결함. 갈지 말고 판정(Ruling) 후 다음 태스크로 이월 | `SKILL.md` §Fix loop | |
 | D | **디버거 dispatch** — 인프라/base 결함은 systematic-debugging 서브에이전트로. 컨트롤러 인라인 삽질 금지 | `SKILL.md` §Handle report | |
 | E | **base health pre-flight** — 루프 시작 전 compile+smoke 1회. 선행 결함 앞에서 한 번에 잡음 | `SKILL.md` §Setup | |
 | F | **태스크 크기 상한** — ~5파일 / ~15분 초과 시 분할 강제 | `writing-plans/SKILL.md` | |
 
 **슬림화 수치**
 
-| 파일 | upstream | v2 |
+| 파일 | upstream 6.3.0 | v2 |
 |---|---|---|
-| `subagent-driven-development/SKILL.md` | 503줄 | 168줄 |
-| `subagent-driven-development/implementer-prompt.md` | 142줄 | 70줄 |
+| `subagent-driven-development/SKILL.md` | 568줄 | 240줄 |
+| `subagent-driven-development/implementer-prompt.md` | 154줄 | 78줄 |
 
 컨트롤러가 매턴 재독하던 다이어그램/예제/rationalizations는
 `subagent-driven-development/references/`로 이동(신규 3개) = 재독 비용 감소.
 
-그 외 7개 스킬 문서는 `superpowers:` 네임스페이스만 bare로 정리(내용 동일).
+## upstream v6.3.0에서 가져온 것
+
+v6.2.0 → v6.3.0 변경분을 커스텀(A~F) 위에 얹었다. 커스텀 3파일은 수동 병합,
+나머지는 6.3.0 파일 + 네임스페이스 strip.
+
+| 6.3.0 변경 | 반영 위치 | 커스텀과의 관계 |
+|---|---|---|
+| **Rulings, not stalls** — 컨트롤러가 인간에게 묻는 대신 판정하고 `Ruling:` 로 원장 기록 | `SKILL.md` §Continuous execution, §Handle report, §Fix loop, §Cap | 기존 "escalate to human" 지점 대체. 단 **E(base health 실패)는 v2 예외로 STOP 유지** — 이 계획이 판정할 결함이 아님 |
+| **정지 조건 4개 한정** — 파괴적/보안/워크트리 밖 부수효과/모든 경로가 추측 | `SKILL.md` §Continuous execution | +E 로 5개 |
+| **Spec = 최종 권위** — 계획이 spec을 인용, 충돌은 spec 기준 | `SKILL.md` §Setup 4, `writing-plans` 템플릿 `**Spec:**` | 신규 |
+| **pre-flight scan = 표** — 태스크쌍/자기일관성 행을 실제로 써야 "clean" | `SKILL.md` §Setup 5 | 기존 1줄 스캔을 대체 |
+| **동일 형태 소규모 태스크 배치** — 같은 종류 1줄 수정 N개는 dispatch 1회로 | `SKILL.md` §Task Loop | F(태스크 크기 상한)와 반대 방향의 짝 — 큰 건 쪼개고, 작고 같은 건 묶음 |
+| **bounded wait** — 짧은 폴링 금지, 5~10분 단위 대기 + 상태 1줄 + 미보고 자식 추적 | `SKILL.md` §Task Loop | 신규 |
+| **no-subagents contract** — implementer가 리뷰어를 스폰하지 못하게 계약 | `SKILL.md` §Dispatch + `implementer-prompt.md` | B(모델 기본값)와 같은 비용 누수 차단 |
+| **"Rulings I made"** — 워크스페이스 삭제 전 판정 전량 보고 | `SKILL.md` §Finish | 신규 |
+| brainstorming three-path router, Codex/Hermes tool refs, finishing-a-development-branch 보강 | 해당 스킬 파일 | 커스텀 없음, 그대로 수용 |
+
+`references/workflow.md`·`rationalizations.md`도 위 판정 모델에 맞춰 갱신.
+
+그 외 스킬 문서는 `superpowers:` 네임스페이스만 bare로 정리(내용 동일).
 프로젝트 스킬은 bare 이름으로 호출되므로 상호참조가 이 이름과 일치해야 한다.
 
 ## 설치 (대상 repo에)

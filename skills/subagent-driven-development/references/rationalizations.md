@@ -11,4 +11,7 @@
 | "The base was already broken, I'll work around it per task" | Pre-existing breakage gets rediscovered every task. Catch it once in Setup base-health; if broken, STOP and report — it's not your plan's task. |
 | "Skip the base pre-flight, the branch is probably fine" | "Probably fine" is how 8 tasks get blocked by one stale placeholder. One smoke run up front is cheaper than N mid-loop detours. |
 | "Reviews slow the loop" | The loop without gates is unverified churn. Risk-tiering already removed the reviews that didn't pay for themselves; the ones left are load-bearing. |
+| "The implementer spawned its own reviewer — free extra assurance" | Duplicate seat on the same diff; the controller's gate is the review. A worker-spawned reviewer is a defect to flag, not rigor. |
+| "This conflict needs a human ruling" | Only four things stop you (destructive op, security action, out-of-worktree side effect, every-path-a-guess) plus a failed base pre-flight. Everything else: rule it, ledger the `Ruling:`, keep going. A parked session costs a whole day. |
+| "I ruled on it, no need to write it down" | An unlogged ruling never reaches your human partner — the Finish step's "Rulings I made" list is built from ledger `Ruling:` lines only. A decision made in secret can't be undone. |
 | "Ledger bookkeeping is overhead" | The ledger is what survives compaction. Controllers without one have re-dispatched entire completed task sequences. |
